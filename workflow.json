@@ -1,0 +1,552 @@
+{
+  "name": "Post Texto",
+  "nodes": [
+    {
+      "parameters": {
+        "additionalFields": {}
+      },
+      "id": "4e97d4fd-6147-40dd-b5b3-d0f0fe36624f",
+      "name": "X1",
+      "type": "n8n-nodes-base.twitter",
+      "position": [
+        96,
+        576
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "httpRequestMethod": "POST",
+        "options": {}
+      },
+      "id": "215e1389-65b6-44dd-b95f-67abb07c4390",
+      "name": "Facebook Graph API1",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "position": [
+        64,
+        80
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "person": "NLnK-WE0AK",
+        "text": "={{ $json['content.parts[0].text'] }}",
+        "additionalFields": {}
+      },
+      "id": "cee26b70-eea0-413e-bbd4-99841ab26521",
+      "name": "LinkedIn1",
+      "type": "n8n-nodes-base.linkedIn",
+      "position": [
+        96,
+        352
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "v2IebbsIddgZ9QcP",
+          "name": "LinkedIn account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1dhRFIzxSYo6E_NW5YtZDfSyHe8vSCr3ml7RQGSZaRSU",
+          "mode": "list",
+          "cachedResultName": "Linkedin Post",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dhRFIzxSYo6E_NW5YtZDfSyHe8vSCr3ml7RQGSZaRSU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Posts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dhRFIzxSYo6E_NW5YtZDfSyHe8vSCr3ml7RQGSZaRSU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "Posted",
+            "AI Output": "={{ $('Split Out').item.json['content.parts[0].text'] }}",
+            "Date Posted": "={{ $('Schedule Trigger').item.json.timestamp }}",
+            "Topic": "={{ $('Clean Output').item.json.selected_query }}"
+          },
+          "matchingColumns": [
+            "Topic"
+          ],
+          "schema": [
+            {
+              "id": "Topic",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "Topic",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "Status",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "AI Output",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "AI Output",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date Posted",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "Date Posted",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "aad1702b-a5bf-4751-aa0b-103e92fa4e51",
+      "name": "Google Sheets2",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        336,
+        368
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "xWRX1jaGNRy7aAWH",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "content.parts[0].text",
+        "options": {}
+      },
+      "id": "525a177a-0c57-454e-8d93-5c70bf219b94",
+      "name": "Split Out",
+      "type": "n8n-nodes-base.splitOut",
+      "position": [
+        -160,
+        352
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "ed85fba6-11a2-4336-8c48-ce1e7169b007",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        -2208,
+        -80
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.perplexity.ai/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"sonar-pro\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Você é um assistente de pesquisa técnica.\\n\\nTÓPICO EM ALTA:\\n- Termo principal: \\\"{{$json.selected_query}}\\\"\\n- Contexto resumido: \\\"{{$json.reason_short}}\\\"\\n\\nTAREFA:\\nPesquise em fontes atualizadas da web sobre \\\"{{$json.selected_query}}\\\" com foco em aplicações práticas para Python, automação de tarefas e workflows (n8n, Power Automate) e pipelines/análise de dados.\\n\\nRETORNE EM PORTUGUÊS DO BRASIL:\\n1. Explicação simples do que é \\\"{{$json.selected_query}}\\\" e por que está em alta agora.\\n2. 3–5 pontos principais de uso em automação, Python e dados.\\n3. Exemplos de projetos que um profissional PLENO poderia tentar.\\n\\nFormato: parágrafos curtos e listas, sem escrever o texto final do post do LinkedIn.\"\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "id": "866596b2-afda-44e3-b175-232c3200a8a8",
+      "name": "Research Topic- Perplexity",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -720,
+        352
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "bpr6MJacSZmKuCQD",
+          "name": "Header Auth account"
+        },
+        "httpBearerAuth": {
+          "id": "4AhsvXz9zoPwhygY",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Find Trend\n\n",
+        "height": 272,
+        "width": 480
+      },
+      "id": "9b77dee8-8187-4ecb-9852-55a211590a4e",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1984,
+        -32
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Choosing Blog Topic\n\n\n",
+        "height": 240,
+        "width": 420
+      },
+      "id": "56a16a89-edec-4ee8-b2a5-3bb0fee2616d",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1280,
+        176
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Research\n\n\n",
+        "height": 240,
+        "width": 728
+      },
+      "id": "00d135b7-7e30-4806-b41b-4c3b7199aad9",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -768,
+        272
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "geo",
+              "value": "US"
+            },
+            {
+              "name": "hl",
+              "value": "en"
+            },
+            {
+              "name": "date",
+              "value": "={{ $now.minus({ days: 3 }).format('yyyy-MM-dd') }} {{ $now.format('yyyy-MM-dd') }}"
+            },
+            {
+              "name": "data_type",
+              "value": "TIMESERIES"
+            },
+            {
+              "name": "engine",
+              "value": "google_trends_trending_now"
+            },
+            {
+              "name": "api_key",
+              "value": "669c870ad769a851f5f237d282f44d978932c3f232bbad0344da7b690aa2f657"
+            },
+            {
+              "name": "category_id",
+              "value": "18"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bac8661b-c786-4962-96ad-b4e72956e7a9",
+      "name": "Google Trends",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -1904,
+        48
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "id": "7e2886e2-62f5-498d-b363-8b5d7caa512f",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        -288,
+        352
+      ],
+      "webhookId": "[GENERATED_WEBHOOK_ID]",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "content": "## Multi Social Media Posting",
+        "height": 800
+      },
+      "id": "0d7380f4-46d4-40cf-a08e-81e3ce398fd9",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Status update",
+        "height": 260
+      },
+      "id": "2f2f88c1-b9ed-40b0-a7ff-e3cf01ef7c35",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        272,
+        272
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Você é um assistente que ajuda um profissional brasileiro de tecnologia a escolher sobre qual trend comentar no LinkedIn.\n\nPERFIL DO PROFISSIONAL:\n- Foco: Python, automação de tarefas e workflows (n8n, Power Automate), pipelines de dados, análise de dados\n- Nível: pleno em desenvolvimento/automação. Tem boa base, já fez projetos reais, mas ainda está aprendendo e NÃO é especialista em tudo.\n- Objetivo: atrair recrutadores mostrando que acompanha tendências e aplica isso em estudos e pequenos projetos, sem pagar de “expert”.\n\nENTRADA:\nVocê receberá um array JSON com buscas em alta no Google (categoria Technology dos EUA). Cada item tem:\n- query: termo buscado\n- search_volume: volume aproximado de busca\n- increase_percentage: crescimento em relação ao período anterior\n- categories: lista de categorias (ex: [\"Games\", \"Technology\"])\n\nAqui está o JSON:\n\n{{ JSON.stringify($json.trends, null, 2) }}\n\nTAREFA:\n1. Avalie quais queries fazem sentido para um profissional de nível PLENO em:\n   - Python\n   - automação de workflows (n8n, Power Automate)\n   - dados (ETL, análise, data pipelines)\n2. FILTRO DURO:\n   - Descarte temas que sejam principalmente: jogos, apostas, celebridades, fofoca, esportes ou entretenimento puro.\n   - Dê preferência a temas ligados a: IA, LLMs, agentes, ferramentas de desenvolvedor, APIs, produtividade, cloud, engenharia de dados, automação.\n3. Considere ao mesmo tempo:\n   - Relevância para a carreira de quem está se desenvolvendo em Python/automação/dados (nível pleno, ainda aprendendo).\n   - Força da tendência (search_volume e increase_percentage).\n\nIMPORTANTE SOBRE O TOM:\n- Escolha um tópico no qual um profissional PLENO poderia comentar com segurança:\n  - entendendo os conceitos gerais\n  - reconhecendo que ainda está estudando\n- Evite temas que exigem conhecimento ultra especialista de nicho.\n- A ideia é parecer alguém que ESTÁ ACOMPANHANDO e APRENDENDO, não um “guru”.\n\nSAÍDA (FORMATO OBRIGATÓRIO):\nRetorne APENAS um objeto JSON, exatamente neste formato:\n\n{\n  \"selected_query\": \"...\",\n  \"reason_short\": \"...\",\n  \"raw_search_volume\": 0,\n  \"raw_increase_percentage\": 0\n}\n\n- \"selected_query\": apenas o texto da query escolhida.\n- \"reason_short\": explicação curta EM PORTUGUÊS (máx. 200 caracteres) dizendo por que esse assunto é bom para um profissional pleno comentar, deixando claro que ele ainda está aprendendo.\n- Não escreva nada fora desse JSON.\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1264,
+        256
+      ],
+      "id": "cdbdaaea-24a6-4515-a3a5-3bb2e8149ae7",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "I3O30kEpPUuB15hl",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const trends = $input.item.json.trending_searches || [];\n\nconst simplified = trends.map((t, idx) => ({\n  id: idx,\n  query: t.query,\n  search_volume: t.search_volume,\n  increase_percentage: t.increase_percentage,\n  categories: (t.categories || []).map(c => c.name)\n}));\n\nreturn [{\n  json: {\n    trends: simplified\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1696,
+        48
+      ],
+      "id": "c3a998bf-41de-4f7c-8949-9ff6875f07f4",
+      "name": "Clean Trends"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Saída bruta do Gemini (ajuste o caminho se necessário)\nconst raw = $input.first().json;\nconst text = raw.content.parts[0].text || '';\n\n// Remove ```\nconst cleaned = text\n  .replace(/```/g, '')\n  .replace(/^json\\s*/i, '')\n  .trim();\n\n// Faz o parse do JSON\nlet parsed;\ntry {\n  parsed = JSON.parse(cleaned);\n} catch (e) {\n  parsed = {\n    selected_query: 'python automation',\n    reason_short: 'Fallback: assunto genérico de automação com Python.'\n  };\n}\n\n// Garante só os campos que você vai usar\nreturn [{\n  json: {\n    selected_query: parsed.selected_query || '',\n    reason_short: parsed.reason_short || ''\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -992,
+        256
+      ],
+      "id": "f5247c29-8eb1-4b8d-b4fe-a05334ae178f",
+      "name": "Clean Output"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Você é um desenvolvedor brasileiro de nível PLENO escrevendo um post para o LinkedIn.\n\nO post deve ser SOBRE o seguinte tema em alta:\n- Tópico principal: \"{{ $('Clean Output').item.json.selected_query }}\"\n- Ângulo sugerido (resumo curto): \"{{ $('Clean Output').item.json.reason_short }}\"\n\nINFORMAÇÕES TÉCNICAS QUE VOCÊ JÁ LEU:\nAbaixo está um texto vindo de uma pesquisa feita na web sobre esse tema\n(Perplexity Search API). Use isso como base factual para o seu raciocínio:\n\n{{$json.choices[0].message.content}}\n\nIMPORTANTE – VERDADE / TOM:\n- Você NÃO deve fingir que já tem uma solução pronta rodando em produção.\n- Escreva como alguém que está estudando o assunto, desenhando ideias de automação\n  e talvez tenha feito alguns testes ou protótipos simples.\n- Use expressões como: \"tive uma ideia\", \"estou rascunhando um fluxo\",\n  \"pretendo testar\", \"daria para montar algo assim\".\n- Evite frases do tipo: \"já automatizei tudo faz meses\", \"meu sistema faz X sozinho há muito tempo\".\n\nESTILO DE REFERÊNCIA (NÃO COPIAR):\nUse como referência este tipo de texto (tom e estrutura), onde a pessoa:\n- apresenta um problema do dia a dia,\n- mostra como pensou em automatizar com n8n + código,\n- traz uma moral da história\n- e fecha com uma pergunta para gerar comentários.\n\nESTRUTURA OBRIGATÓRIA DO POST:\n\n1) ABERTURA (1–2 linhas)\n- Mostre uma ideia ou insight ligado a \"{{ $('Clean Output').item.json.selected_query }}\",\n  em formato de frase chamativa, com 1–2 emojis.\n\n2) PROBLEMA DO DIA A DIA (1 parágrafo curto)\n- Descreva uma situação realista que esse tema poderia ajudar a melhorar\n  (tarefa chata, falta de dados, muito trabalho manual, etc.).\n\n3) ESBOÇO DO FLUXO / PROJETO (2–3 parágrafos)\n- Explique COMO poderia ser uma automação ou projeto, em 3–5 passos numerados (1️⃣, 2️⃣, 3️⃣…),\n  conectando especialmente:\n  - Python\n  - n8n (ou outra ferramenta de automação)\n  - dados / monitoramento / análise.\n- Deixe claro que é um plano ou experimento em estudo, não um produto pronto.\n\n4) APRENDIZADOS / MOTIVAÇÃO (1–2 parágrafos)\n- A partir do texto técnico acima (Perplexity) e das suas ideias de fluxo,\n  destaque 2–3 aprendizados ou pontos legais sobre esse tema para alguém de nível pleno.\n\n5) CHAMADA PARA AÇÃO (1–2 linhas)\n- Termine com uma pergunta convidando as pessoas a sugerir ideias de automação\n  ou variações desse projeto.\n\nREGRAS:\n- Escreva em PORTUGUÊS DO BRASIL, com tom leve e profissional.\n- Mostre curiosidade e jornada de aprendizado, não postura de guru.\n- Máximo ~1.500 caracteres.\n- Use 2–4 emojis ao longo do texto.\n- Finalize com hashtags em texto simples (sem links), por exemplo:\n  #n8n #Automacao #Python #DataEngineering + 1 hashtag ligada ao tema (como #IoT, #APIs, #AI etc.).\n- Não mencione IA, Perplexity ou modelos de linguagem; o texto deve soar natural.\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        352
+      ],
+      "id": "d21a49cc-9537-4730-92ac-46eb099ee2ba",
+      "name": "Message a model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "I3O30kEpPUuB15hl",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn1": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "LinkedIn1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Trends": {
+      "main": [
+        [
+          {
+            "node": "Clean Trends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Trends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Topic- Perplexity": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Clean Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Trends": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Output": {
+      "main": [
+        [
+          {
+            "node": "Research Topic- Perplexity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b9818a81-eea8-4be5-bbb1-4ca692088bf6",
+  "meta": {
+    "instanceId": "f1ed7e2112979a616f0c5d3a64a6766f4872e6bfd2eb2190705ea1b1a5bac86b"
+  },
+  "id": "R4rbQ1Ee1dLQmCoj",
+  "tags": []
+}
